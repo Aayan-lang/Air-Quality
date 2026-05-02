@@ -61,32 +61,32 @@ function App() {
   return (
     <div className="container">
 
-      {/* Hero Section */}
-      <h1 className="title">🌍 Air Intelligence Dashboard</h1>
+      {/* Hero */}
+      <h1 className="title">🌍 Air Intelligence</h1>
       <p className="subtitle">
         Real-time air quality insights at a glance
       </p>
 
-      {/* Stats Cards */}
+      {/* Cards */}
       {data && (
         <div className="cards">
           <div className="card">
-            <h3>AQI</h3>
+            <h3>🌫 AQI</h3>
             <p>{data.list[0].main.aqi}</p>
           </div>
 
           <div className="card">
-            <h3>PM2.5</h3>
+            <h3>💨 PM2.5</h3>
             <p>{data.list[0].components.pm2_5}</p>
           </div>
 
           <div className="card">
-            <h3>PM10</h3>
+            <h3>🌁 PM10</h3>
             <p>{data.list[0].components.pm10}</p>
           </div>
 
           <div className="card">
-            <h3>CO</h3>
+            <h3>🧪 CO</h3>
             <p>{data.list[0].components.co}</p>
           </div>
         </div>
