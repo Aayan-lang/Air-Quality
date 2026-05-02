@@ -1,14 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
-import { debounce } from "lodash";
 
-const API_KEY = "YOUR_API_KEY";
+const API_KEY = "c1103b116485c78e9a3cbc987c4d9f2f";
 
 function App() {
   const [city, setCity] = useState("");
   const [data, setData] = useState(null);
-  const [dark, setDark] = useState(true);
   const [favorites, setFavorites] = useState([]);
 
   const getCoordinates = async (city) => {
@@ -16,10 +14,7 @@ function App() {
       `https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${API_KEY}`
     );
 
-    if (res.data.length === 0) {
-      throw new Error("City not found");
-    }
-
+    if (res.data.length === 0) throw new Error("City not found");
     return res.data[0];
   };
 
@@ -30,23 +25,20 @@ function App() {
     return res.data;
   };
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce(async (city) => {
-        try {
-          const coord = await getCoordinates(city);
-          const aqData = await getAirQuality(coord.lat, coord.lon);
-          setData(aqData);
-        } catch (error) {
-          alert("City not found");
-        }
-      }, 800),
-    []
-  );
+  const handleSearch = async () => {
+    try {
+      const coord = await getCoordinates(city);
+      const aqData = await getAirQuality(coord.lat, coord.lon);
+      setData(aqData);
+    } catch {
+      alert("City not found");
+    }
+  };
 
-  const handleSearch = () => {
-    if (!city) return;
-    debouncedSearch(city);
+  const addFavorite = () => {
+    if (city && !favorites.includes(city)) {
+      setFavorites([...favorites, city]);
+    }
   };
 
   const getAQIText = (aqi) => {
@@ -61,111 +53,58 @@ function App() {
   };
 
   const getHealthAdvice = (aqi) => {
-    if (aqi <= 2) return "Air is safe for outdoor activities";
-    if (aqi === 3) return "Limit prolonged outdoor exertion";
-    if (aqi >= 4) return "Avoid outdoor activities";
-  };
-
-  const addFavorite = () => {
-    if (!favorites.includes(city)) {
-      setFavorites([...favorites, city]);
-    }
+    if (aqi <= 2) return "Air is safe";
+    if (aqi === 3) return "Limit outdoor activity";
+    return "Avoid going outside";
   };
 
   return (
-    <div className={`${dark ? "bg-gray-900 text-white" : "bg-white text-black"} min-h-screen flex flex-col items-center justify-center px-4`}>
+    <div className="container">
 
-      <h1 className="text-5xl font-bold mb-4">🌍 Air Quality Tracker</h1>
+      {/* Hero Section */}
+      <h1 className="title">🌍 Air Intelligence Dashboard</h1>
+      <p className="subtitle">
+        Real-time air quality insights at a glance
+      </p>
 
-      {/* Dark Mode Button */}
-      <button
-        onClick={() => setDark(!dark)}
-        className="mb-4 px-4 py-2 bg-gray-700 rounded"
-      >
-        Toggle Mode
-      </button>
+      {/* Stats Cards */}
+      {data && (
+        <div className="cards">
+          <div className="card">
+            <h3>AQI</h3>
+            <p>{data.list[0].main.aqi}</p>
+          </div>
 
-      {/* Input */}
-      <div className="flex gap-3 mb-6">
+          <div className="card">
+            <h3>PM2.5</h3>
+            <p>{data.list[0].components.pm2_5}</p>
+          </div>
+
+          <div className="card">
+            <h3>PM10</h3>
+            <p>{data.list[0].components.pm10}</p>
+          </div>
+
+          <div className="card">
+            <h3>CO</h3>
+            <p>{data.list[0].components.co}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="search-box">
         <input
-          className="px-4 py-2 rounded-lg text-black w-64 outline-none"
           type="text"
           placeholder="Enter city..."
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
 
-        <button
-          onClick={handleSearch}
-          className="bg-blue-500 px-5 py-2 rounded-lg hover:bg-blue-600"
-        >
-          Search
-        </button>
-
-        <button
-          onClick={addFavorite}
-          className="bg-green-500 px-3 py-2 rounded"
-        >
-          Save
+        <button className="search-btn" onClick={handleSearch}>
+          Analyze →
         </button>
       </div>
-
-      {/* Favorites */}
-      <div className="mb-4">
-        {favorites.map((fav, index) => (
-          <button
-            key={index}
-            onClick={() => setCity(fav)}
-            className="mr-2 bg-gray-700 px-2 py-1 rounded"
-          >
-            {fav}
-          </button>
-        ))}
-      </div>
-
-      {/* Data */}
-      {data && (
-        <>
-          <div className="bg-gray-800 p-6 rounded-xl shadow-xl text-center w-full max-w-md">
-
-            <h2 className="text-3xl font-semibold mb-2">
-              AQI: {data.list[0].main.aqi}
-            </h2>
-
-            <p className="text-lg">{getAQIText(data.list[0].main.aqi)}</p>
-
-            <p className="mt-2 text-gray-300">
-              {getHealthAdvice(data.list[0].main.aqi)}
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-              <p>PM2.5: {data.list[0].components.pm2_5}</p>
-              <p>PM10: {data.list[0].components.pm10}</p>
-              <p>CO: {data.list[0].components.co}</p>
-              <p>NO2: {data.list[0].components.no2}</p>
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="mt-6 bg-gray-800 p-4 rounded-xl">
-            <LineChart
-              width={400}
-              height={250}
-              data={[
-                { name: "PM2.5", value: data.list[0].components.pm2_5 },
-                { name: "PM10", value: data.list[0].components.pm10 },
-                { name: "CO", value: data.list[0].components.co },
-                { name: "NO2", value: data.list[0].components.no2 },
-              ]}
-            >
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" />
-            </LineChart>
-          </div>
-        </>
-      )}
 
     </div>
   );
